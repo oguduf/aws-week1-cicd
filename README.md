@@ -1,0 +1,104 @@
+name: AWS S3 CI-CD
+
+on:
+  push:
+    branches:
+      - dev
+      - prod
+
+  pull_request:
+    branches:
+      - stage
+      - prod
+
+jobs:
+
+  build:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build website
+        run: |
+          mkdir -p dist
+          cp website/index.html dist/
+          cp website/style.css dist/
+
+      - name: Verify build
+        run: |
+          ls -la dist
+
+  test:
+    if: github.event_name == 'pull_request' && github.base_ref == 'stage'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build website
+        run: |
+          mkdir -p dist
+          cp website/index.html dist/
+          cp website/style.css dist/
+
+      - name: Test website
+        run: |
+          test -s dist/index.html
+          test -s dist/style.css
+          grep -q "Hello from AWS!" dist/index.html
+
+  security:
+    if: github.event_name == 'pull_request' && github.base_ref == 'prod'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets with Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/prod'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build website
+        run: |
+          mkdir -p dist
+          cp website/index.html dist/
+          cp website/style.css dist/
+
+      - name: Test before deployment
+        run: |
+          test -s dist/index.html
+          test -s dist/style.css
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+        role-to-assume: arn:aws:iam::866934333672:role/GitHubActionsCICDRole-cloudbatch818-zein
+        aws-region: us-east-2
+
+      - name: Deploy website to S3
+        run: |
+          aws s3 sync dist/ s3://cloudbatch818/github-to-aws-pipeline/omer/

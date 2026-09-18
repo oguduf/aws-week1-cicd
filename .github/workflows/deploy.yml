@@ -32,7 +32,8 @@ jobs:
           ls -la dist
 
   test:
-    if: github.event_name == 'pull_request' && github.base_ref == 'stage'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
@@ -52,7 +53,8 @@ jobs:
           grep -q "Hello from AWS!" dist/index.html
 
   security:
-    if: github.event_name == 'pull_request' && github.base_ref == 'prod'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    needs: test
     runs-on: ubuntu-latest
 
     permissions:
@@ -72,7 +74,7 @@ jobs:
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-    needs: build
+    needs: security
     runs-on: ubuntu-latest
 
     permissions:

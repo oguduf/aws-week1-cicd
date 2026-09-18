@@ -96,8 +96,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-        role-to-assume: arn:aws:iam::866934333672:role/GitHubActionsCICDRole-cloudbatch818-zein
-        aws-region: us-east-2
+          role-to-assume: arn:aws:iam::866934333672:role/GitHubActionsCICDRole-cloudbatch818-zein
+          aws-region: us-east-2
 
       - name: Deploy website to S3
         run: |

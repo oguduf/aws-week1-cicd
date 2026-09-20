@@ -14,7 +14,12 @@ on:
 jobs:
 
   build:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: >
+      (github.event_name == 'push' && github.ref == 'refs/heads/dev') ||
+      (github.event_name == 'pull_request' && (
+        (github.head_ref == 'dev' && github.base_ref == 'stage') ||
+        (github.head_ref == 'stage' && github.base_ref == 'prod')
+      ))
     runs-on: ubuntu-latest
 
     steps:
@@ -32,7 +37,12 @@ jobs:
           ls -la dist
 
   test:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: >
+      (github.event_name == 'push' && github.ref == 'refs/heads/dev') ||
+      (github.event_name == 'pull_request' && (
+        (github.head_ref == 'dev' && github.base_ref == 'stage') ||
+        (github.head_ref == 'stage' && github.base_ref == 'prod')
+      ))
     needs: build
     runs-on: ubuntu-latest
 
@@ -53,7 +63,10 @@ jobs:
           grep -q "Hello from AWS!" dist/index.html
 
   security:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: > 
+      (github.event_name == 'push' && github.ref == 'refs/heads/dev') ||
+      (github.event_name == 'pull_request' && (
+        (github.head_ref == 'stage' && github.base_ref == 'prod'))
     needs: test
     runs-on: ubuntu-latest
 
@@ -73,8 +86,13 @@ jobs:
 
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-    needs: security
+    if: >
+      (github.event_name == 'push' && github.ref == 'refs/heads/dev') ||
+      (github.event_name == 'pull_request' && (
+        (github.head_ref == 'dev' && github.base_ref == 'stage') ||
+        (github.head_ref == 'stage' && github.base_ref == 'prod')
+      ))
+    needs: test
     runs-on: ubuntu-latest
 
     permissions:

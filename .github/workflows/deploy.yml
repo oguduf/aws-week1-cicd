@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - dev
-      - prod
 
   pull_request:
     branches:
@@ -92,7 +91,7 @@ jobs:
         (github.head_ref == 'dev' && github.base_ref == 'stage') ||
         (github.head_ref == 'stage' && github.base_ref == 'prod')
       ))
-    needs: test
+    needs: security
     runs-on: ubuntu-latest
 
     permissions:
